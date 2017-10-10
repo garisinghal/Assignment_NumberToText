@@ -1,0 +1,128 @@
+﻿@model TestAssignment.Models.InformationModel
+
+<!---------------------------------------->
+<!Method to read the data on Submit button>
+<!----------------------------------------->
+<html>
+<h1 style="text-decoration:underline">Test Assignment</h1>
+<body style="background-color:lightskyblue; font-family:Benton Sans Light,Arial,sans-serif;">
+    @using (Html.BeginForm("Index", "Home", FormMethod.Get))
+    {
+        <div id="numberToTextDiv">
+            <fieldset style="border:solid; border-color:darkgray">
+                <legend style="font-weight:bold">Input</legend>
+                <table id="inputTable">
+                    <tr>
+                        <td>
+                            Enter Person Name:
+                        </td>
+                        <td>
+                            <input type="text" name="name" id="txtName" onkeyup="validate(this);" value="@(Model != null? Model.MyName:"")" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Enter Amount ($):
+                        </td>
+                        <td>
+                            <input type="text" name="amount" id="txtAmount" onkeyup="checkDec(this);" value="@(Model != null ? Model.MyOriginalNumber:"")" />
+                        </td>
+                    </tr>
+                </table>
+            </fieldset>
+            <br />            
+            <fieldset style="border:solid; border-color:darkgray">
+                <legend style="font-weight:bold">Output</legend>
+                <table id="outputTable">
+                    <tr>
+                        <td>
+                            Entered Person Name is:
+                        </td>
+                        <td>
+                            <span id="lblName"> @(Model != null ? Model.MyName : "") </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Entered Amount (in Words):
+                        </td>
+                        <td>
+                            <span id="lblAmount">@(Model != null ? Model.MyCurrentcyNumberText : "") </span>
+                        </td>
+                    </tr>
+                </table>
+            </fieldset>
+            <br />            
+            <table>
+                <tr>
+                    <td>
+                        <input type="submit" value="Process Detail" />
+                    </td>
+                    <td>
+                        <input type="button" id="btnGetInfo" value="Process Detail(.js)" />
+                    </td>
+                    <td>
+                        <input type="button" id="btnClear" value="Clear" />
+                    </td>
+                </tr>
+            </table>
+        </div>
+    }
+</body>
+</html>
+
+<!--------------------->
+<!AJAX Funcationality>
+<!--------------------->
+
+<script src="../Scripts/jquery-1.10.2.min.js" type="text/javascript"></script>
+<script type="text/javascript">
+    var apiUrl = '@System.Configuration.ConfigurationManager.AppSettings["urlPath"]';
+    $(document).ready(function () {
+        $(document).off('click', '#btnGetInfo');
+        $(document).on("click", "#btnGetInfo", function () {
+            GetInformation();
+            return false;
+        });
+        $(document).off('click', '#btnClear');
+        $(document).on("click", "#btnClear", function () {            
+            document.getElementById("txtName").value = null;
+            document.getElementById("txtAmount").value = null;          
+            window.location.reload();
+        });
+	});
+	//Method to call the Web API on click of AJAX button, through AJAX
+    function GetInformation() {
+        var name = $("#txtName").val();
+        var amount = $("#txtAmount").val();
+        jQuery.support.cors = true;
+        $.ajax({
+            url: apiUrl + '/api/Information/GetNameAndAmount/' + name + '/' + amount + '/',
+            type: 'GET',
+            dataType: 'json',
+            contentType: "application/json; charset=utf-8",
+            success: function (data) {
+                if (data != null) {
+                    $("#lblName").text(data.MyName);
+                    $("#lblAmount").text(data.MyCurrentcyNumberText);
+                }
+            },
+            error: function (x, y, z) {
+                alert(x + '\n' + y + '\n' + z);
+            }
+        });
+    }
+
+    // Validate the Name field to Allow only Alphabets
+    function validate(tb) {
+        tb.value = tb.value.replace(/[^a-zA-Z]/g, '');
+    }
+
+    // Validate the Amount field to Allow only Decimal value
+    function checkDec(el) {
+        var ex = /^[0-9]+\.?[0-9]*$/;
+        if (ex.test(el.value) == false) {
+            el.value = el.value.substring(0, el.value.length - 1);
+        }
+    }
+</script>
